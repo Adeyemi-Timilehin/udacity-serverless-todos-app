@@ -12,7 +12,7 @@ export const handler = middy(
     const todosId = event.pathParameters.todoId
     // TODO: Return a presigned URL to upload a file for a TODO item with the provided id
         const todo = await getTodoById(todosId)
-        todo.attachmentUrl = `https://${bucketname}.s3.amazonaws.com/${todoId}`
+        todo.attachmentUrl = `https://${bucketname}.s3.amazonaws.com/${todosId}`
         await addAttachment(todo)
 
         const url = await getUploadUrl(todosId)
