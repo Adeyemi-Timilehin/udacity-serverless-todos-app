@@ -1,20 +1,22 @@
 org: hadeymike
-app: serverless-todo-app
-service: serverless-todo-app
+app: serverless-todos
+service: serverless-todos
+disabledDeprecations:
+  - CODE_1 # To disable specific deprecation with code "CODE_1"
+  - "*" # To disable all deprecation messages
 
 plugins:
+  - serverless-reqvalidator-plugin
+  - serverless-aws-documentation
   - serverless-webpack
   - serverless-iam-roles-per-function
   - serverless-plugin-tracing
 
 provider:
   name: aws
-  runtime: nodejs12.x
-  lambdaHashingVersion: '20201221'
-
+  runtime: nodejs16.x
   stage: ${opt:stage, 'dev'}
   region: ${opt:region, 'us-west-2'}
-
   tracing:
     lambda: true
     apiGateway: true
@@ -24,12 +26,11 @@ provider:
   environment:
     TODOS_TABLE: Todos-${self:provider.stage}
     TODOS_CREATED_AT_INDEX: CreatedAtIndex
-    ATTACHMENT_S3_BUCKET: serverless-c4-todo-gord-images-${self:provider.stage}
+    ATTACHMENT_S3_BUCKET: udacity-serverless-todos-${self:provider.stage}
     SIGNED_URL_EXPIRATION: 300
     AUTH_0_SECRET_ID: yEgZzUFySpUJMpjYR8-Q3Uo2RVFcfOEwqKxexbV46SsscysN9NbIK8w5fkDW7rx2
-
+  
   logs:
-    # Enable API Gateway logs
     restApi: true
 
   iam:
@@ -40,7 +41,6 @@ provider:
             - xray:PutTelemetryRecords
             - xray:PutTraceSegments
           Resource: "*"
-
 
 functions:
 
@@ -57,12 +57,18 @@ functions:
           path: todos
           cors: true
           authorizer: Auth
+          reqValidatorName: RequestBodyValidator
+
     iamRoleStatements:
       - Effect: Allow
         Action:
            - dynamodb:Query
         Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}   
-
+      - Effect: Allow
+        Action:
+          - xray:PutTraceSegments
+          - xray:PutTelemetryRecords 
+        Resource: '*' 
   # TODO: Configure this function - 
   # Provide iamRoleStatements property. Decide the Actions and AWS Resource. 
   # To refer to an AWS resource defined in the "Resources" section, you can use "Resource: !GetAtt <resource-name>.Arn"
@@ -75,6 +81,7 @@ functions:
           path: todos
           cors: true
           authorizer: Auth
+          reqValidatorName: RequestBodyValidator
           request:
             schemas:
               application/json: ${file(models/create-todo-model.json)}
@@ -83,6 +90,11 @@ functions:
         Action:
            - dynamodb:PutItem
         Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
+      - Effect: Allow
+        Action:
+          - xray:PutTraceSegments
+          - xray:PutTelemetryRecords 
+        Resource: '*'
 
   # TODO: Configure this function
   # Provide property for setting up CORS, Authorizer, iamRoleStatements, and request schemas
@@ -143,7 +155,6 @@ functions:
            - s3:PutObject
            - s3:GetObject
         Resource: arn:aws:s3:::${self:provider.environment.ATTACHMENT_S3_BUCKET}/*
-  
 
 resources:
   Resources:
@@ -153,6 +164,16 @@ resources:
     #GatewayResponseDefault4XX:
     #  Type: AWS::ApiGateway::GatewayResponse
     #  Properties:
+    GatewayResponseDefault4XX:
+      Type: AWS::ApiGateway::GatewayResponse
+      Properties:
+        ResponseParameters:
+          gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+          gatewayresponse.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+          gatewayresponse.header.Access-Control-Allow-Methods: "'*'"
+        ResponseType: DEFAULT_4XX
+        RestApiId:
+          Ref: ApiGatewayRestApi
     
     # TODO: Create a DynamoDB table with local secondary index and a composite key
     TodosTable:
@@ -219,3 +240,12 @@ resources:
               Action: 's3:*'
               Resource: 'arn:aws:s3:::${self:provider.environment.ATTACHMENT_S3_BUCKET}/*'
         Bucket: !Ref AttachmentsBucket
+      
+    RequestBodyValidator:
+      Type: AWS::ApiGateway::RequestValidator
+      Properties:
+        Name: "request-body-validator"
+        RestApiId:
+          Ref: ApiGatewayRestApi
+        ValidateRequestBody: true
+        ValidateRequestParameters: false
