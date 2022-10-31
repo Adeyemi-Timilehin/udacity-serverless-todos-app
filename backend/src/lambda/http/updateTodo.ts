@@ -6,7 +6,7 @@ import { cors, httpErrorHandler } from 'middy/middlewares'
 
 import { UpdateTodoRequest } from '../../requests/UpdateTodoRequest'
 import { getUserId } from '../utils'
-import { updateTodos } from '../../helpers/todosAcess'
+import { updateTodos } from '../../helpers/todos'
 
 
 export const handler = middy(
@@ -17,7 +17,7 @@ export const handler = middy(
         await updateTodos(userId, todoId, updatedTodo)
 
         return {
-            statusCode: 201,
+            statusCode: 204,
             headers: {
               'Access-Control-Allow-Origin': '*',
               'Access-Control-Allow-Credentials': true

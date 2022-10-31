@@ -5,16 +5,16 @@ import { cors } from 'middy/middlewares'
 import { CreateTodoRequest } from '../../requests/CreateTodoRequest'
 import { getUserId } from '../utils';
 
-import { todoCreate } from '../../helpers/todos'
 
-import { createTodo } from '../../helpers/todosAcess'
+
+import { createTodo } from '../../helpers/todos'
 export const handler = middy(
   async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
     const newTodo: CreateTodoRequest = JSON.parse(event.body)
     
     const userId=getUserId(event)
-const todo=todoCreate(newTodo,userId)
-const createdTodo=await createTodo(todo)
+const todo=createTodo(newTodo,userId)
+// const createdTodo=await createTodo(todo)
 
 return {
   statusCode: 201,
@@ -23,7 +23,7 @@ return {
     'Access-Control-Allow-Credentials': true
   },
   body: JSON.stringify({
-    createdTodo
+    "item":todo
   })
 }
   }

@@ -2,7 +2,7 @@ import 'source-map-support/register'
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda'
 import * as middy from 'middy'
 import { cors } from 'middy/middlewares'
-import { getAllTodosByUserId } from '../../helpers/todosAcess'
+import { getAllTodosByUserId } from '../../helpers/todos'
 import { getUserId } from '../utils'
 
 // TODO: Get all TODO items for a current user
@@ -12,7 +12,7 @@ export const handler = middy(
     const todos = await getAllTodosByUserId(getUserId(event))
 
         return {
-            statusCode: 201,
+            statusCode: 200,
             headers: {
               'Access-Control-Allow-Origin': '*',
               'Access-Control-Allow-Credentials': true
