@@ -23,7 +23,7 @@ function createDynamoDBClient() {
     return new XAWS.DynamoDB.DocumentClient()
   }
   
-
+//get all users
 export async function getAllTodosByUserId(userId: string): Promise<TodoItem[]> {
     const result = await docClient.query({
         TableName: Tabletodos,
@@ -36,6 +36,7 @@ export async function getAllTodosByUserId(userId: string): Promise<TodoItem[]> {
     return items as TodoItem[]
 }
 
+//get all todos
 export async function getTodoById(todoId: string): Promise<TodoItem> {
     const result = await docClient.query({
         TableName: Tabletodos,
@@ -46,9 +47,15 @@ export async function getTodoById(todoId: string): Promise<TodoItem> {
         }
     }).promise()
     const items = result.Items
-    if (items.length !== 0) return items[0] as TodoItem
+
+    if (items.length !== 0) 
+    {
+        return items[0] as TodoItem
+    
+    }
 
     return null
+
 }
 
 
@@ -63,34 +70,41 @@ export async function createTodo(todo: TodoItem): Promise<TodoItem> {
 }
 
 
-
-export async function updateTodos(todoUpdate: UpdateTodoRequest, todoId: string, userId: string): Promise<void> {
+//update todos
+export async function updateTodos( userId: string, todoId: string, todoUpdate: UpdateTodoRequest): Promise<UpdateTodoRequest> {
     await docClient.update({
         TableName: Tabletodos,
         Key: {
-            userId,
-            todoId
+            userId:userId,
+            todoId:todoId
         },
-        UpdateExpression: 'set name = :name, dueDate = :dueDate, done = :done',
-        ExpressionAttributeValues: {
-            ':name': todoUpdate.name,
-            ':dueDate': todoUpdate.dueDate,
-            ':done': todoUpdate.done
-        },
+        UpdateExpression: 'set #name = :name, dueDate = :dueDate, done = :done',
+    ExpressionAttributeNames: {
+      '#name': 'name'
+    },
+    ExpressionAttributeValues: {
+      ':name': todoUpdate.name,
+      ':dueDate': todoUpdate.dueDate,
+      ':done': todoUpdate.done
+    }
        
     }).promise()
+return todoUpdate
 }
 
-export async function deleteTodos(userId: string, todoId: string): Promise < void> {
-    await docClient.delete({
-        TableName: Tabletodos,
-        Key: {
-            userId,
-            todoId
-        }
-    }).promise()
-}
+//datalogic to delete todos
+export async function deleteTodo(todoId: string, userId: string) {
+await docClient.delete({
+      TableName: Tabletodos,
+      Key: {
+        todoId: todoId,
+        userId: userId
+      }
+    }).promise();
+  
+  }
 
+  //add
 export async function addAttachment(todo : TodoItem): Promise<TodoItem> {
     const result = await docClient.update({
         TableName: Tabletodos,

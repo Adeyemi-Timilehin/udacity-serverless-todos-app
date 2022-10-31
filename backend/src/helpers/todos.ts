@@ -1,18 +1,17 @@
 import { CreateTodoRequest } from '../requests/CreateTodoRequest';
-import { UpdateTodoRequest } from '../requests/UpdateTodoRequest';
-import * as uuid from 'uuid';
-import { APIGatewayProxyEvent } from 'aws-lambda'
-import { getUserId } from '../lambda/utils'
-import { TodoItem } from '../models/TodoItem'
-import { deleteTodos, updateTodos } from './todosAcess'
 
-export function todoCreate(todoRequest: CreateTodoRequest, event: APIGatewayProxyEvent): TodoItem {
+import * as uuid from 'uuid';
+
+import { TodoItem } from '../models/TodoItem'
+
+
+export function todoCreate(todoRequest: CreateTodoRequest,userId:string): TodoItem {
     const todoId = uuid.v4()
-    if (!todoRequest.name) return null
+    const createdAt=new Date().toISOString()
     const todo = {
         todoId: todoId,
-        userId: getUserId(event),
-        createdAt: new Date().toISOString(),
+        userId: userId,
+        createdAt:createdAt ,
         done: false,
         attachmentUrl: "",
         ...todoRequest
@@ -20,15 +19,3 @@ export function todoCreate(todoRequest: CreateTodoRequest, event: APIGatewayProx
     return todo as TodoItem
 }
 
-export async function deleteTodo(userId: string, todoId: string): Promise<string> {
-    await deleteTodos(userId, todoId)
-
-    return
-}
-
-export async function updateTodo(userId: string, todoId: string, updatedTodo: UpdateTodoRequest): Promise<TodoItem> {
-
-    await updateTodos(updatedTodo, todoId, userId)
-
-    return
-}
