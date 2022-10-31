@@ -23,43 +23,12 @@ function createDynamoDBClient() {
     return new XAWS.DynamoDB.DocumentClient()
 }
 
-//get all users
-export async function getAllTodosByUserId(userId: string): Promise<TodoItem[]> {
-    const result = await docClient.query({
-        TableName: Tabletodos,
-        IndexName: indextodos,
-        KeyConditionExpression: 'userId = :userId',
-        ExpressionAttributeValues: {
-            ':userId': userId
-        }
-    }).promise()
-    const items = result.Items
-    return items as TodoItem[]
-}
-
-//get all todos
-export async function getTodoById(todoId: string): Promise<TodoItem> {
-    const result = await docClient.query({
-        TableName: Tabletodos,
-        IndexName: indextodos,
-        KeyConditionExpression: 'todoId = :todoId',
-        ExpressionAttributeValues: {
-            ':todoId': todoId
-        }
-    }).promise()
-    const items = result.Items
-
-    if (items.length !== 0) {
-        return items[0] as TodoItem
-
-    }
-
-    return null
-
-}
 
 
 //// TODO: Implement the dataLayer logic
+
+
+//create todo
 export async function createTodo(todo: TodoItem): Promise<TodoItem> {
     await docClient.put({
         TableName: Tabletodos,
@@ -69,6 +38,18 @@ export async function createTodo(todo: TodoItem): Promise<TodoItem> {
     return todo
 }
 
+//get all todos by userId
+export async function getAllTodosByUserId(userId: string): Promise<TodoItem[]> {
+    const result = await docClient.query({
+        TableName: Tabletodos,
+        KeyConditionExpression: 'userId = :userId',
+        ExpressionAttributeValues: {
+            ':userId': userId
+        }
+    }).promise()
+    
+    return result.Items  as TodoItem[]
+}
 
 //update todos
 export async function updateTodos(userId: string, todoId: string, todoUpdate: UpdateTodoRequest): Promise<UpdateTodoRequest> {
@@ -118,4 +99,19 @@ export async function addAttachment(todo: TodoItem): Promise<TodoItem> {
         }
     }).promise()
     return result.Attributes as TodoItem
+}
+
+//get all todos by todoID
+export async function getAllTodoById(todoId: string):Promise<TodoItem>  {
+   const output= await docClient.query({
+        TableName: Tabletodos,
+        IndexName: indextodos,
+        KeyConditionExpression: 'todoId = :todoId',
+        ExpressionAttributeValues: {
+            ':todoId': todoId
+        }
+    }).promise()
+    const item = output.Items
+    const result= (item.length >=1)?  item[0] as TodoItem :null
+    return result
 }
