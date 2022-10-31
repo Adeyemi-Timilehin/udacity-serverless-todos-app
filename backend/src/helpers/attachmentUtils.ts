@@ -19,3 +19,4 @@ export function UploadUrl(imageId: string) {
         Expires: ExpirationTime
     })
 }
+
